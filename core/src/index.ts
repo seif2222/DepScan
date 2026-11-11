@@ -23,6 +23,9 @@ export type {
   Vulnerability,
 } from './types.js';
 
+export { analyze } from './analyze.js';
+export type { AnalyzeOptions } from './analyze.js';
+
 export { compareSeverity, isSeverity, sortVulnerabilitiesBySeverity } from './severity.js';
 
 export { computeStats, countBySeverity, emptySeverityCounts } from './stats.js';
