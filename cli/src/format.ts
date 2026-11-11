@@ -2,19 +2,13 @@ import { SEVERITIES, sortVulnerabilitiesBySeverity, type Report, type Severity }
 
 const RULE = '─'.repeat(64);
 
-function pad(value: string, width: number): string {
-  return value.length >= width ? value : value + ' '.repeat(width - value.length);
-}
-
-/** One line per severity, zero counts included, so an empty scan still shows the shape. */
+/** One line per severity, zero counts included. */
 function severityTable(bySeverity: Readonly<Record<Severity, number>>): string[] {
-  return SEVERITIES.map((severity) => `  ${pad(severity, 10)}${bySeverity[severity]}`);
+  return SEVERITIES.map((severity) => `  ${severity.padEnd(10)}${bySeverity[severity]}`);
 }
 
 function findingLines(report: Report): string[] {
-  if (report.vulnerabilities.length === 0) {
-    return ['No known vulnerabilities found.'];
-  }
+  if (report.vulnerabilities.length === 0) return ['No known vulnerabilities found.'];
 
   return sortVulnerabilitiesBySeverity(report.vulnerabilities).flatMap((v) => {
     const lines = [
@@ -28,19 +22,12 @@ function findingLines(report: Report): string[] {
 }
 
 function unresolvedLines(report: Report): string[] {
-  const unresolved = report.meta.unresolved;
-  if (unresolved.length === 0) return [];
-
+  if (report.meta.unresolved.length === 0) return [];
   return [
     '',
-    `Unresolved requirements (${unresolved.length}) — not checked:`,
-    ...unresolved.map((u) => `  line ${u.line}  ${u.reason}  ${u.raw}`),
+    `Unresolved requirements (${report.meta.unresolved.length}) — not checked:`,
+    ...report.meta.unresolved.map((u) => `  line ${u.line}  ${u.reason}  ${u.raw}`),
   ];
-}
-
-function warningLines(report: Report): string[] {
-  if (report.meta.warnings.length === 0) return [];
-  return ['', `Warnings (${report.meta.warnings.length}):`, ...report.meta.warnings.map((w) => `  ${w}`)];
 }
 
 /**
@@ -49,7 +36,7 @@ function warningLines(report: Report): string[] {
  */
 export function formatReport(report: Report): string[] {
   const { meta, stats } = report;
-  const unresolvedNote =
+  const completeness =
     meta.unresolved.length > 0
       ? `${stats.unresolvedCount} requirement(s) could not be checked — this scan is incomplete.`
       : 'Scan complete: every requirement was checked.';
@@ -69,8 +56,7 @@ export function formatReport(report: Report): string[] {
     RULE,
     ...findingLines(report),
     ...unresolvedLines(report),
-    ...warningLines(report),
     '',
-    unresolvedNote,
+    completeness,
   ];
 }
